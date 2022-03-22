@@ -42,8 +42,8 @@ from tensortradeExtension.data.sine import SineWaveDataGenerator
 window_size = 30
 n_steps = 10000
 evaluation_freq = 100
-model_path = "./strategy_1_model"
-log_path = "./strategy_1_logs"
+model_path = "/models/strategy_1"
+log_path = "/logs/strategy_1"
 
 # Create the environement
 def create_env():
