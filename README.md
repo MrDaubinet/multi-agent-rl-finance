@@ -23,3 +23,23 @@ I had to set my LD_PRELOAD path for torch with the following:
 
 ## Install TA-LIB
 Download tar file and run `make` then `make install`.
+
+# TODO:
+* update from the BSH action scheme to a BHSS (short) scheme which selects specified blocks of shares.
+  * blocks should be equvalent to maximium cash in shares normalised between 1 - 10.
+    * E.g, 10 dollars = 10 shares, therefore trading quantities = [1, 2, 3, 4, 5, 6, 7, 8 , 9, 10] for buy, sell and short.
+* update reward scheme from simple profit to something which includes risk, position-time and other useful evaluators identified in my research.
+* update network architecture to use a cnn
+* update network architecture to use an LSTM
+* implement a strategy on stock data
+  * Setup preprocessing:
+    * generate technical indicators
+    * identify corelation & remove duplicates
+* implement a strategy on fundamental data
+* implement a strategy which utilises multi-agent rl
+* implement a strategy which utilises hierarchical rl for quantity selection and stock action
+  * implement a new strategy as an action selection strategy which specifies an amount of stock to buy / sell / short
+
+**future additions**
+* Add a stock picking rl agent who's trained to select the best stock at a specified period
+  * Add this rl agent as a new level to the hierarchical rl agent. 

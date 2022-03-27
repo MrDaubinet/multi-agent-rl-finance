@@ -22,13 +22,7 @@ from tensortrade.oms.wallets import Wallet, Portfolio
 
 # stable baseline
 from stable_baselines3 import DQN
-from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
-from stable_baselines3.common.monitor import Monitor
-
-# other libraries
-# import numpy as np
-# import pandas as pd
-# import matplotlib.pyplot as plt
+from stable_baselines3.common.callbacks import EveryNTimesteps, EvalCallback
 
 # Custom code
 import sys
@@ -37,13 +31,17 @@ sys.path.append("..")
 from tensortradeExtension.env.generic.components.renderer.positionChangeChart import PositionChangeChart
 from tensortradeExtension.data.sine import SineWaveDataGenerator
 
+from stablebaseline3Extension.common.callbacks.renderCallback import RenderCallback
+
+import os
 
 # run configuration
 window_size = 30
 n_steps = 10000
-evaluation_freq = 100
-model_path = "/models/strategy_1"
-log_path = "/logs/strategy_1"
+evaluation_freq = n_steps / 10
+model_path = "./models/strategy_1"
+log_path = "./logs/strategy_1"
+tensorboard_name = "strategy_1"
 
 # Create the environement
 def create_env():
@@ -58,8 +56,8 @@ def create_env():
       price_stream
   )
   # setup financial instruments
-  USD = Instrument("USD", 2, "U.S. Dollar")
-  TTC = Instrument("TTC", 2, "TensorTrade Coin")
+  USD = Instrument("USD", 8, "U.S. Dollar")
+  TTC = Instrument("TTC", 8, "TensorTrade Coin")
   cash = Wallet(sinewavee_xchange, 100 * USD)
   asset = Wallet(sinewavee_xchange, 0 * TTC)
 
@@ -95,9 +93,10 @@ def create_env():
       action_scheme=action_scheme,
       reward_scheme=reward_scheme,
       renderer_feed=renderer_feed,
-      renderer=PositionChangeChart(),
       window_size=window_size,
-      max_allowed_loss=0.6
+      min_periods=30,
+      max_allowed_loss=0.6,
+      renderer=PositionChangeChart(),
   )
   return environment
 
@@ -129,38 +128,47 @@ def train():
     exploration_initial_eps=0.9,
     target_update_interval=1000,
     buffer_size=1000,
-    learning_starts=0
+    learning_starts=0,
+    tensorboard_log=log_path
   )
   
   # set the evaluation model
   eval_callback = EvalCallback(
     eval_env=env,
+    n_eval_episodes=1,
     best_model_save_path=model_path,
     log_path=log_path,
     eval_freq=evaluation_freq,
     deterministic=True, 
-    render=True
+    render=False,
+    warn=False
   )
 
-  agent.learn(total_timesteps=n_steps, callback=eval_callback)
+  # set the frequency callback
+  render_callback = EveryNTimesteps(n_steps=evaluation_freq, callback=RenderCallback(env))
+
+  agent.learn(total_timesteps=n_steps, callback=[eval_callback, render_callback], tb_log_name=tensorboard_name)
 
   agent.save(model_path)
-
 
 def evaluate():
   '''
     Evaluate the RL agent for this strategy
   '''
+  directory = os.getcwd()
+  print(directory)
+
   # Instantiate the environment
   env = create_env()
   env.reset()
 
   # load the model
-  agent = DQN.load(model_path)
+  agent = DQN.load(model_path+"/best_model")
   
   # Run until episode ends
   episode_reward = 0
   done = False
+  obs = env.reset()
 
   while not done:
       action, _state = agent.predict(obs, deterministic=True)
@@ -168,6 +176,7 @@ def evaluate():
       episode_reward += reward
 
   env.render()
+  print("done")
 
 # Helper Function
 def get_optimal_batch_size(window_size=30, n_steps=1000, batch_factor=4, stride=1):

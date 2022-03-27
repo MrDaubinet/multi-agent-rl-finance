@@ -9,7 +9,7 @@ class PositionChangeChart(Renderer):
     def __init__(self, color: str = "orange"):
         self.color = "orange"
 
-    def render(self, env, mode):
+    def render(self, env):
         history = pd.DataFrame(env.observer.renderer_history)
 
         actions = list(history.action)
