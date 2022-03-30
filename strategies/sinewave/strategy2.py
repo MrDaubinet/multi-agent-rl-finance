@@ -2,7 +2,7 @@
   Strategy 1:
     Data: Generated Sinewave
     DRL: DQN with a custom MLP architecture
-    Action Space: 
+    State Space: 
       price values,
       price -> rolling mean (10 data points),
       price -> rolling mean (50 data points),
@@ -12,6 +12,7 @@
       Buy -> purchase 100% of the asset
       sell -> sell 100% of the asset
       hold -> do nothing
+      short -> short 100% of the asset
 '''
 
 # tensortrade
