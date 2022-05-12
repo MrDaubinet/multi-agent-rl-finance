@@ -4,8 +4,6 @@ import matplotlib.pyplot as plt
 
 from tensortrade.env.generic import Renderer
 
-from stable_baselines3.common.logger import Figure
-
 class PositionChangeChart(Renderer):
 
     def __init__(self, color: str = "orange"):

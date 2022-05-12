@@ -2,7 +2,7 @@
   Strategy 1:
     Data: Generated Sinewave
     DRL: DQN with a custom MLP architecture
-    State Space: 
+    Action Space: 
       price values,
       price -> rolling mean (10 data points),
       price -> rolling mean (50 data points),
@@ -12,7 +12,6 @@
       Buy -> purchase 100% of the asset
       sell -> sell 100% of the asset
       hold -> do nothing
-      short -> short 100% of the asset
 '''
 
 # tensortrade
@@ -33,14 +32,15 @@ from stable_baselines3.common.callbacks import EveryNTimesteps, EvalCallback
 import sys
 sys.path.append("..")
 
-from tensortradeExtension.env.generic.components.renderer.positionChangeChart import PositionChangeChart
+from tensortradeExtension.env.generic.components.renderer.bhsPositionChangeChart import PositionChangeChart
 from tensortradeExtension.data.sine import SineWaveDataGenerator
 
-from stablebaseline3Extension.common.callbacks.renderCallback import RenderCallback
+from stablebaseline3Extension.common.callbacks.RenderBSHCallback import RenderCallback
+from stablebaseline3Extension.common.callbacks.RenderHyperParameters import RenderHyperParameterCallback
 
 # run configuration
 window_size = 30
-n_steps = 4000
+n_steps = 2000
 evaluation_freq = n_steps / 10
 model_path = "./models/data-sinewave-strategy1"
 log_path = "./logs/data-sinewave-strategy1"
@@ -111,12 +111,6 @@ def train():
   env = create_env(dataframe)
   env.reset()
 
-  #environment details
-  print("Action Space: "+str(env.action_space))
-  print("State Space: "+str(env.observation_space.shape))
-  print("Next observation")
-  print(env.observer.feed.next())
-
   # get the optimal batch size
   batch_size = get_optimal_batch_size(window_size=window_size, n_steps=n_steps)
 
@@ -145,10 +139,13 @@ def train():
     warn=False
   )
 
+  # hyperparameter_callback = RenderHyperParameterCallback(env, window_size, n_steps)
+
   # set the frequency callback
   render_callback = EveryNTimesteps(n_steps=evaluation_freq, callback=RenderCallback(env))
+  hyperparameter_callback = EveryNTimesteps(n_steps=1, callback=RenderHyperParameterCallback(env, window_size, n_steps))
 
-  agent.learn(total_timesteps=n_steps, callback=[eval_callback, render_callback], tb_log_name=tensorboard_name)
+  agent.learn(total_timesteps=n_steps, callback=[eval_callback, render_callback, hyperparameter_callback], tb_log_name=tensorboard_name)
 
   agent.save(model_path)
 

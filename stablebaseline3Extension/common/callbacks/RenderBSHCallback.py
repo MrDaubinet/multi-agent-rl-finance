@@ -11,8 +11,6 @@ from stable_baselines3.common.logger import Figure
 import sys
 sys.path.append("..")
 
-from tensortradeExtension.env.generic.components.renderer.positionChangeChart import PositionChangeChart
-
 class RenderCallback(BaseCallback):
     """
     A custom callback that derives from ``BaseCallback``.
@@ -33,7 +31,6 @@ class RenderCallback(BaseCallback):
         For child callback (of an `EventCallback`), this will be called
         when the event is triggered.
         """
-        # self.position_change_chart.render(self.env)
 
         # Run until episode ends
         episode_reward = 0
@@ -95,4 +92,5 @@ class RenderCallback(BaseCallback):
         performance_df = pd.DataFrame().from_dict(self.env.action_scheme.portfolio.performance, orient='index')
         performance_df.plot(ax=axs[1])
         axs[1].set_title("Net Worth")
+
         self.logger.record("Training Performance", Figure(fig, close=True), exclude=("stdout", "log", "json", "csv"))

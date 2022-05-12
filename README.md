@@ -1,28 +1,30 @@
 # What is this?
-This is an implementation of my masters thesis. It relies on the `tensortrade` for setting up financial RL environments and `stable-baselines-3` for RL agent implementations. My masters thesis has the goal of combining multiple trading RL algorithms, each trainined on different data types, to create a more sofisticated and greater performing algorithm. To achieve this goal, I will be creating trading strategies. Each trading strategy will produce an RL algorithm. Strategies may encorporate previous strategies. 
+This is an implementation of my masters thesis. It relies on the `tensortrade` for setting up financial RL environments and `Rlib` for RL agent implementations. My masters thesis has the goal of combining multiple trading RL algorithms, each trainined on different data types, to create a more sofisticated and greater performing algorithm. To achieve this goal, I will be creating trading strategies. Each trading strategy will produce an RL algorithm. Strategies may encorporate previous strategies. 
 
 # Repository Structure
 - **.devcontainer** contains vscode settings for running this project as a docker contain in vscode.
 - **.vscode** contains opinionated vscode settings for debugging and formatting.
-- **Experiments** include jupyter notebooks created for investigation purposes of the masters.
+- **experiments** include jupyter notebooks created for investigation purposes of the masters.
+- **strategies** strategies implemented to train DRL agents on specific data.
 - **models** saved models from tested strategies (these may be excluded from git due to size).
 - **logs** training logs for strategies.
-- **tensortrade** extensios I make to plug into the tensortrade framework. 
+- **tensortrade** extensios made to plug into the tensortrade framework. 
 
 
 # Install Instructions
-## Docker
-I am programming on an apple m1 arm based machine. Due to this, I had to build a docker image `tf-devel-cpu-arm64v8-jupyter` for tensorflow that is based off of Arm. I did this buy downloading the tensorflow repository and running docker build for the the `arm64v8` dockerfile. This could probably be automated with a bash script, but your cpu architecture may change. Update the base docker image to a tensorflow base image supporte by your pc.
+1. Install Anaconda and create a new environment for this projects dependancies
+2. Attemp to install from the environment.yml for conda. If it works great, if it doesn't, follow the next steps.
+3. Install Ray RLlib from the official installation instructions
+4. Install tensortrade
 
-## Environment paths
-I had to set my LD_PRELOAD path for torch with the following:
+# Applic silicon (m1), Install Instructions
+1. Install Anaconda and create a new environment for this projects dependancies
+2. Attemp to install from the environment.yml for conda. If it works great, if it doesn't, 
+3. Install Ray Rlib, follow the apple silicon instructions from the official website
+4. Install tensortrade for apple silicon
+5. Download the tensortrade repository, comment out tensotrade from the requirements.txt and install all depedencies.
+6. You're good to go.
 
-```
-  export LD_PRELOAD=/usr/local/lib/python3.8/dist-packages/torch/lib/libgomp-d22c30c5.so.1
-```
-
-## Install TA-LIB
-Download tar file and run `make` then `make install`.
 
 # TODO:
 * update from the BSH action scheme to a BHSS (short) scheme which selects specified blocks of shares.

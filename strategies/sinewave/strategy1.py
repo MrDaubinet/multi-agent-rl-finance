@@ -2,7 +2,7 @@
   Strategy 1:
     Data: Generated Sinewave
     DRL: DQN with a custom MLP architecture
-    Action Space: 
+    Observation Space: 
       price values,
       price -> rolling mean (10 data points),
       price -> rolling mean (50 data points),
@@ -12,6 +12,8 @@
       Buy -> purchase 100% of the asset
       sell -> sell 100% of the asset
       hold -> do nothing
+    Reward Strategy:
+      Position Based Returns
 '''
 
 # tensortrade
@@ -24,22 +26,22 @@ from tensortrade.oms.exchanges import Exchange, ExchangeOptions
 from tensortrade.oms.services.execution.simulated import execute_order
 from tensortrade.oms.wallets import Wallet, Portfolio
 
-# stable baseline
-from stable_baselines3 import DQN
-from stable_baselines3.common.callbacks import EveryNTimesteps, EvalCallback
+from ray.rllib.agents.ppo import PPOTrainer
+from ray.tune.registry import register_env
 
 # Custom code
 import sys
 sys.path.append("..")
 
-from tensortradeExtension.env.generic.components.renderer.positionChangeChart import PositionChangeChart
+from tensortradeExtension.env.generic.components.renderer.bhsPositionChangeChart import PositionChangeChart
 from tensortradeExtension.data.sine import SineWaveDataGenerator
 
-from stablebaseline3Extension.common.callbacks.renderCallback import RenderCallback
+# from stablebaseline3Extension.common.callbacks.RenderBSHCallback import RenderCallback
+# from stablebaseline3Extension.common.callbacks.RenderHyperParameters import RenderHyperParameterCallback
 
 # run configuration
 window_size = 30
-n_steps = 4000
+n_steps = 2000
 evaluation_freq = n_steps / 10
 model_path = "./models/data-sinewave-strategy1"
 log_path = "./logs/data-sinewave-strategy1"
@@ -48,7 +50,9 @@ tensorboard_name = "data-sinewave-strategy1"
 # create the data generator
 data_generator = SineWaveDataGenerator(y_peaks=5)
 
-def create_env(dataframe):
+def create_train_env(config):
+  # get the training data
+  dataframe = data_generator.train()
   # create price stream
   price_stream = Stream.source(list(dataframe['price']), dtype="float").rename("USD-TTC")
   # create exchange
@@ -104,52 +108,34 @@ def train():
   '''
     Train the RL agent for this strategy
   '''
-  # get the training data
-  dataframe = data_generator.train()
   # Instantiate the environment
-  env = create_env(dataframe)
-  env.reset()
-
-  #environment details
-  print("Action Space: "+str(env.action_space))
-  print("State Space: "+str(env.observation_space.shape))
-  print("Next observation")
-  print(env.observer.feed.next())
+  # env = create_env(dataframe)
+  # env.reset()
 
   # get the optimal batch size
-  batch_size = get_optimal_batch_size(window_size=window_size, n_steps=n_steps)
+  # batch_size = get_optimal_batch_size(window_size=window_size, n_steps=n_steps)
 
-  # Create the agent
-  agent = DQN(
-    "MlpPolicy", 
-    env=env, 
-    batch_size=batch_size, 
-    verbose=0, 
-    exploration_initial_eps=0.9,
-    target_update_interval=1000,
-    buffer_size=1000,
-    learning_starts=0,
-    tensorboard_log=log_path
-  )
-  
-  # set the evaluation model
-  eval_callback = EvalCallback(
-    eval_env=env,
-    n_eval_episodes=1,
-    best_model_save_path=model_path,
-    log_path=log_path,
-    eval_freq=evaluation_freq,
-    deterministic=True, 
-    render=False,
-    warn=False
+  # agent.learn(total_timesteps=n_steps, callback=[eval_callback, render_callback, hyperparameter_callback], tb_log_name=tensorboard_name)
+
+  # agent.save(model_path)
+
+  # Register the environment
+  register_env("TradingEnv", create_train_env)
+
+  # Create an RLlib Trainer instance to learn how to act in the above
+  # environment.
+  trainer = PPOTrainer(
+    config={
+    "env": "TradingEnv",
+    "env_config": {},  # config to pass to env class
+    }
   )
 
-  # set the frequency callback
-  render_callback = EveryNTimesteps(n_steps=evaluation_freq, callback=RenderCallback(env))
-
-  agent.learn(total_timesteps=n_steps, callback=[eval_callback, render_callback], tb_log_name=tensorboard_name)
-
-  agent.save(model_path)
+  for i in range(n_steps):
+    results = trainer.train()
+    reward = results['episode_reward_mean']
+    # print(f"Iter: {i}; avg. reward={results['episode_reward_mean']}")
+    print(f"Iteration: {i}; episode_reward_mean: {reward}")
 
 def evaluate():
   '''
@@ -162,7 +148,7 @@ def evaluate():
   env.reset()
 
   # load the model
-  agent = DQN.load(model_path+"/best_model")
+  # agent = DQN.load(model_path+"/best_model")
   
   # Run until episode ends
   episode_reward = 0

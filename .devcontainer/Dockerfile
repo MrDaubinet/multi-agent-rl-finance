@@ -1,29 +1,14 @@
-FROM tf-devel-cpu-arm64v8-jupyter
+# See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.231.2/containers/python-3-anaconda/.devcontainer/base.Dockerfile
+FROM rayproject/ray-ml
 
-RUN pip install tensorflow -f https://tf.kmtea.eu/whl/stable.html
+# create conda environment
+# RUN conda env create --file requirements.txt
 
-# RUN apt-get update && sudo apt-get install wget
+# # Make RUN commands use the new environment:
+SHELL ["pip", "install", "tensortrade"]
 
-# RUN wget -O inst_conda.sh "https://repo.anaconda.com/archive/Anaconda3-2021.11-Linux-aarch64.sh"
-  
-# RUN /bin/bash inst_conda.sh -b \
-#   && rm inst_conda.sh \
-#   && ~/anaconda3/bin/conda init 
+# # SHELL ["conda", "create", "--name" <env_name> --file requirements.txt]
 
-# RUN source ~/.bashrc
-
-# RUN conda create -n quantra python=3.8.8 -y \
-#   && conda activate quantra
-
-# RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz \
-#   && sudo tar -xzf ta-lib-0.4.0-src.tar.gz \
-#   && sudo rm ta-lib-0.4.0-src.tar.gz \
-#   && cd ta-lib/ \
-#   && sudo ./configure --build=aarch64-unknown-linux-gnu --prefix=/usr \
-#   && sudo make \
-#   && sudo make install \
-#   && cd ~ \
-#   && sudo rm -rf ta-lib/ \
-#   && pip install ta-lib
-
-# RUN pip install -r requirements.txt
+# # Demonstrate the environment is activated:
+# RUN echo "Make sure tensortrade is installed:"
+# RUN python -c "import tensortrade"
