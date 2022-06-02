@@ -2,12 +2,12 @@
 This is an implementation of my masters thesis. It relies on the `tensortrade` for setting up financial RL environments and `Rlib` for RL agent implementations. My masters thesis has the goal of combining multiple trading RL algorithms, each trainined on different data types, to create a more sofisticated and greater performing algorithm. To achieve this goal, I will be creating trading strategies. Each trading strategy will produce an RL algorithm. Strategies may encorporate previous strategies. 
 
 # Repository Structure
-- **.devcontainer** contains vscode settings for running this project as a docker contain in vscode.
 - **.vscode** contains opinionated vscode settings for debugging and formatting.
-- **experiments** include jupyter notebooks created for investigation purposes of the masters.
+- **experiments** include jupyter notebooks created for investigation purposes of the masters. (This could be removed)
 - **strategies** strategies implemented to train DRL agents on specific data.
 - **models** saved models from tested strategies (these may be excluded from git due to size).
 - **logs** training logs for strategies.
+- **rayExtensions** classes which extend the behaviour of the ray framework. 
 - **tensortrade** extensios made to plug into the tensortrade framework. 
 
 
