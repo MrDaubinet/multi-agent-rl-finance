@@ -48,6 +48,7 @@ def generate_env(dataframe, config):
   ])
   # set reward scheme
   reward_scheme = PBR(price=price_stream)
+  # reward_scheme = SimpleProfit(window_size=config["window_size"])
   # set action scheme
   action_scheme = BSH(
     cash=cash,
@@ -59,7 +60,10 @@ def generate_env(dataframe, config):
     Stream.sensor(action_scheme, lambda s: s.action, dtype="float").rename("action")
   ])
   # The matplot lib instance we want to plot to
-  fig, axs = plt.subplots(1, 2, figsize=(15, 5))
+  plt.close(4)
+  plt.close(5)
+  # plt.cla()
+  fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5), clear=True)
   fig.suptitle("Performance")
   # if config["render_env"] == True:
   # create the environment
@@ -69,7 +73,7 @@ def generate_env(dataframe, config):
     action_scheme=action_scheme,
     reward_scheme=reward_scheme,
     renderer_feed=renderer_feed,
-    renderer=PositionChangeChart(fig, axs),
+    renderer=PositionChangeChart(ax1, ax2),
     window_size=config["window_size"], # number of previous time series datapoints to use as the observation
     min_periods=config["min_periods"], # minimum number of time series datapoints used for warm up
     max_allowed_loss=config["max_allowed_loss"], # % of allowed loss on starting funds

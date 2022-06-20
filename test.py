@@ -31,10 +31,11 @@ def plot_envs():
   plot(train_data, title="Training Data")
   plot(validate_data, title="Validation Data")
   plot(test_data, title="Testing Data")
-  plt.show()
+  # plt.show()
+  plt.draw()
+  plt.pause(0.001)
 
 def main():
-  plt.close('all')
   print_env_rewards(100)
   plot_envs()
   analysis = strategy1.train()

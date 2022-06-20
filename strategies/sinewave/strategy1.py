@@ -21,11 +21,11 @@
 # TODO: move the environment details to its own class / folder
 
 # RAY Reinforcement Learning
-from ray.rllib.agents.ppo import PPOTrainer
 import ray
 from ray import tune
 from ray.rllib.agents import ppo
 from ray.tune import Analysis
+from ray.tune.stopper import CombinedStopper, MaximumIterationStopper, TrialPlateauStopper
 
 import time
 
@@ -33,14 +33,18 @@ import time
 # Environments
 from environments.sinewaveEnvironment import create_env
 
-# CallBack
+# Tune CallBack
 from rayExtension.callbacks.printCallback import PrintCallback
-from rayExtension.callbacks.renderCallback import RenderCallback
+# Tune Stopper
+from rayExtension.stoppers.netWorthstopper import NetWorthstopper
+
+# Agent Callback
+from rayExtension.callbacks.recordNetWorthCallback import RecordNetWorthCallback
 
 # run configuration
-EPOCH = 50
-evaluation_freq = EPOCH / 10
-reward_threshold = 450
+MAX_EPOCH = 50
+evaluation_freq = 50
+NETWORTH_THRESHOLD = 500
 log_name = "strategy1"
 model_path = f"./models/sinewave/{log_name}"
 log_dir = f"/Users/jordandaubinet/Documents/Repositories/masters/masters-code/logs/sinewave/{log_name}"
@@ -63,7 +67,6 @@ env_test_config = {
 	"num_workers": 1,
   "period": 10, # the number of periods to generate with the sine wave
 }
-
 # configure the test environment
 env_eval_config = {
 	"type": "train",
@@ -74,7 +77,6 @@ env_eval_config = {
 	"num_workers": 1,
   "period": 10, # the number of periods to generate with the sine wave
 }
-
 # Configure the algorithm.
 config = {
   "env": "TradingEnv",
@@ -83,25 +85,13 @@ config = {
   "evaluation_num_episodes": 1,
   "evaluation_num_workers": 1,
   "evaluation_config": {
-      "env_config": env_eval_config,
+      "env_config": env_train_config,
       "render_env": True,
-      "explore": False
+      "explore": True
   },
-  # "evaluation_interval": 1,
-	# "create_env_on_driver": True,
-  # "num_envs_per_worker": 1,
-  "num_workers": 2,
+  "callbacks": RecordNetWorthCallback,
+  "num_workers": 4,
   "batch_mode": "complete_episodes",
-  # Size of batches collected from each worker.(allows for parrallel sample collection) 
-  # "rollout_fragment_length": 1028,
-  # Number of timesteps collected for each SGD round. This defines the size
-  # of each SGD epoch.
-  # "train_batch_size": 2056,
-  # minibatch size within each epoch.
-  # "sgd_minibatch_size": 128,
-  # Number of SGD iterations in each outer loop (i.e., number of epochs to
-  # execute per train batch).
-  # "num_sgd_iter": 30
 }
 ppo_config = ppo.DEFAULT_CONFIG.copy()
 ppo_config.update(config)
@@ -114,25 +104,29 @@ def train() -> Analysis:
   tune.register_env("TradingEnv", create_env)
 
   # dashboard
-  ray.init(include_dashboard=True, ignore_reinit_error=True, local_mode=True)
+  ray.init(local_mode=True)
   
   start = time.time()
 
+  # Setup stopping conditions
+  stopper = CombinedStopper(
+      MaximumIterationStopper(max_iter=MAX_EPOCH),
+      NetWorthstopper(max_net_worth=NETWORTH_THRESHOLD, patience=3),
+      TrialPlateauStopper(metric="net_worth_max")
+  )
+
   # train an agent
   analysis = tune.run(
-    PPOTrainer,
+    "PPO",
     name=log_name,
     config=ppo_config,
-    stop={
-      "episode_reward_mean": reward_threshold,
-      "training_iteration": EPOCH,
-    },
+    stop=stopper,
     metric="episode_reward_mean",
     mode="max",
     verbose=0,
     local_dir=log_dir,
     checkpoint_at_end=True,
-    callbacks=[PrintCallback(), RenderCallback()]
+    callbacks=[PrintCallback()]
   )
   print(f"Best Trail log directory: {analysis.best_logdir}")
   ray.shutdown()
