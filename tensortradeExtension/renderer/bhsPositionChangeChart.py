@@ -43,8 +43,8 @@ class PositionChangeChart(Renderer):
         performance_df.plot(ax=self.ax2)
         self.ax2.set_title("Net Worth")
         
-        plt.draw()
-        plt.pause(0.0001)
+        # plt.draw()
+        # plt.pause(0.0001)
 
     def close(self, _):
         plt.close()

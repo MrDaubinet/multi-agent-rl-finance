@@ -88,3 +88,4 @@ class RecordNetWorthCallback(DefaultCallbacks):
     ):
         net_worth = worker.env.action_scheme.portfolio.net_worth
         episode.custom_metrics["net_worth"] = net_worth
+        # print(f"net_worth: {net_worth}")

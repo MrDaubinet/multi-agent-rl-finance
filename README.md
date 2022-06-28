@@ -37,6 +37,8 @@ This is an implementation of my masters thesis. It relies on the `tensortrade` f
   * Setup preprocessing:
     * generate technical indicators
     * identify corelation & remove duplicates
+    * normalise the data set
+    * implement a function to un-normalise the dataset for rendering
 * implement a strategy on fundamental data
 * implement a strategy which utilises multi-agent rl
 * implement a strategy which utilises hierarchical rl for quantity selection and stock action

@@ -15,7 +15,9 @@ class NetWorthstopper(Stopper):
         return
 
     def has_reached_objective(self, result):
-        if result["custom_metrics"]["net_worth_max"] > self._max_net_worth:
+        if "net_worth_max" not in result["custom_metrics"]:
+            self.stop = False
+        elif result["custom_metrics"]["net_worth_max"] > self._max_net_worth:
             self.stop = True
         return self.stop
 

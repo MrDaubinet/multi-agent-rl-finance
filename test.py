@@ -1,5 +1,5 @@
 from strategies.sinewave import strategy1
-from environments.sinewaveEnvironment import maximum_reward
+from environments.sinewaveEnvBSH import maximum_reward
 from data.sine import SineWaveDataGenerator
 import matplotlib.pyplot as plt
 

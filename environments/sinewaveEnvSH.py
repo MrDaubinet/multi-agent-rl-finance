@@ -3,7 +3,6 @@ from data.sine import SineWaveDataGenerator
 
 # tensortrade  Environment
 from tensortrade.oms.instruments import Instrument
-from tensortrade.env.default.actions import BSH
 from tensortrade.env.default.rewards import PBR
 from tensortrade.env import default
 from tensortrade.feed.core import DataFeed, Stream
@@ -17,6 +16,8 @@ import sys
 sys.path.append("..")
 
 # --- Custom Code --- #
+# Action Scheme
+from tensortradeExtension.actions.sh import SH
 # Renderer
 from tensortradeExtension.renderer.bhsPositionChangeChart import PositionChangeChart
 
@@ -24,19 +25,32 @@ def generate_env(dataframe, config):
   # create price stream
   price_stream = Stream.source(list(dataframe['price']), dtype="float").rename("USD-TTC")
   # create exchange
-  sinewavee_xchange = Exchange("sine-wave", service=execute_order, options=ExchangeOptions(commission=0.01))(
+  sinewave_exchange = Exchange("sine-wave", service=execute_order, options=ExchangeOptions(commission=0.01))(
     price_stream
   )
   # setup financial instruments
-  USD = Instrument("USD", 8, "U.S. Dollar")
-  TTC = Instrument("TTC", 8, "TensorTrade Coin")
-  cash = Wallet(sinewavee_xchange, 100 * USD)
-  asset = Wallet(sinewavee_xchange, 0 * TTC)
+  USD = Instrument("USD", 2, "U.S. Dozllar")
+  TTC = Instrument("TTC", 2, "TensorTrade Coin")
+  # setup wallets
+  cash = Wallet(sinewave_exchange, 100 * USD)
+  asset = Wallet(sinewave_exchange, 0 * TTC)
+  deposit_margin = Wallet(sinewave_exchange, 0 * USD)
 
-  # creat portfolio
-  portfolio = Portfolio(USD, [
+  broker_asset = Wallet(sinewave_exchange, 0 * TTC)
+  broker_cash = Wallet(sinewave_exchange, 0 * USD)
+
+  profit_wallet = Wallet(sinewave_exchange, 0 * USD)
+
+  # creat the agent portfolio
+  agent_portfolio = Portfolio(USD, [
     cash,
-    asset
+    asset,
+  ])
+
+  # creat the agent portfolio
+  broker_portfolio = Portfolio(USD, [
+    broker_asset,
+    broker_cash
   ])
   # create data feed
   feed = DataFeed([
@@ -48,28 +62,32 @@ def generate_env(dataframe, config):
   ])
   # set reward scheme
   reward_scheme = PBR(price=price_stream)
-  # reward_scheme = SimpleProfit(window_size=config["window_size"])
   # set action scheme
-  action_scheme = BSH(
+  action_scheme = SH(
     cash=cash,
-    asset=asset
+    asset=asset,
+    broker_asset=broker_asset,
+    broker_cash=broker_cash,
+    deposit_margin=deposit_margin,
+    profit_wallet=profit_wallet,
+    broker_portfolio=broker_portfolio
   ).attach(reward_scheme)
   # create the render feed
   renderer_feed = DataFeed([
     Stream.source(dataframe["price"], dtype="float").rename("price"),
     Stream.sensor(action_scheme, lambda s: s.action, dtype="float").rename("action")
   ])
-  # The matplot lib instance we want to plot to
-  plt.close(4)
-  plt.close(5)
-  # plt.cla()
+  # kill matplot lib windows that open (not sure why these two appear)
+  # plt.close(4)
+  # plt.close(5)
+  # The matplot lib figure we want to plot to
   fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5), clear=True)
   fig.suptitle("Performance")
   # if config["render_env"] == True:
   # create the environment
   environment = default.create(
     feed=feed,
-    portfolio=portfolio,
+    portfolio=agent_portfolio,
     action_scheme=action_scheme,
     reward_scheme=reward_scheme,
     renderer_feed=renderer_feed,
