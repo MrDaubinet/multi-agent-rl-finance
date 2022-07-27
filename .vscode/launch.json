@@ -4,7 +4,6 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-
     {
       "name": "Python: Current File",
       "type": "python",
@@ -14,18 +13,10 @@
       "justMyCode": false
     },
     {
-      "name": "Python: Main File",
+      "name": "Python: sinewaveSH strategy1",
       "type": "python",
       "request": "launch",
-      "program": "./main.py",
-      "console": "integratedTerminal",
-      "justMyCode": false
-    },
-    {
-      "name": "Python: Test File",
-      "type": "python",
-      "request": "launch",
-      "program": "./test.py",
+      "program": "./rl_fts/strategies/sinewaveSH/strategy1.py",
       "console": "integratedTerminal",
       "justMyCode": false
     }

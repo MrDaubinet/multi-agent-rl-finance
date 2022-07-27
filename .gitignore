@@ -6,3 +6,5 @@
 /Experiments/models/*
 # Don't add experiment logs to git
 /Experiments/logs/*
+# don't track cache
+*/__pycache__/

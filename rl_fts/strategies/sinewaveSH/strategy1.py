@@ -28,6 +28,8 @@ from rl_fts.rayExtension.callbacks.recordShortNetWorthCallback import RecordNetW
 
 from ray.rllib.agents import ppo
 
+import tensorflow as tf
+
 # Environments
 from rl_fts.environments.sinewaveSH import create_env
 
@@ -40,7 +42,7 @@ class Strategy1(Strategy):
     self.patience = 1
     self.evaluation_frequency = 1
     self.log_name = "sinewaveSH/strategy1"
-    self.log_dir = f"/Users/jordandaubinet/Documents/Repositories/masters/masters-code/logs/"
+    self.log_dir = "/Users/jordandaubinet/Documents/Repositories/masters/masters-code/logs/"
 
     # configure the train environment
     self.env_train_config = {
@@ -93,6 +95,7 @@ class Strategy1(Strategy):
       "batch_mode": "complete_episodes",
       "horizon": 30,
       "callbacks": RecordNetWorthCallback,
+      "framework": "tf2", "eager_tracing": True
     }
     ppo_config = ppo.DEFAULT_CONFIG.copy()
     ppo_config.update(self.config)
@@ -101,7 +104,7 @@ class Strategy1(Strategy):
     self.create_env = create_env
     self.agent = ppo.PPOTrainer
 
-def main():
+def main(): 
   strategy = Strategy1()
   strategy.train()
 
