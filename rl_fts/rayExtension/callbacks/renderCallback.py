@@ -14,8 +14,7 @@ class RenderCallback(Callback):
     def on_trial_result(self, iteration, trials, trial, result, **info):
         # plot the graphs
         if iteration % self.evaluation_frequency == 0:
-            plt.tight_layout()
-            plt.plot()
+            # plt.plot()
 
             fig = plt.gcf()
             # send image to tensorboard
@@ -30,9 +29,6 @@ class RenderCallback(Callback):
         # Save the plot to a PNG in memory.
         buf = io.BytesIO()
         plt.savefig(buf, format='png')
-        # Closing the figure prevents it from being displayed directly inside
-        # the notebook.
-        # plt.close(figure)
         buf.seek(0)
         # Convert PNG buffer to TF image
         image = tf.image.decode_png(buf.getvalue(), channels=4)

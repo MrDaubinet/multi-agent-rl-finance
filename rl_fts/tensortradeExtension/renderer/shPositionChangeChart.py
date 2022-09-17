@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 from tensortrade.env.generic import Renderer
 from tensortrade.env.generic import TradingEnv
 
-import tensorflow as tf
-
 class PositionChangeChart(Renderer):
 
     def __init__(self, fig, ax1, ax2):

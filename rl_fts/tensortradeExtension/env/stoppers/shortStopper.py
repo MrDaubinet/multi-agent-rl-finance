@@ -1,6 +1,6 @@
 
 from tensortrade.env.generic import Stopper, TradingEnv
-from rl_fts.tensortradeExtension.actions.sh import SH
+# from rl_fts.tensortradeExtension.actions.sh import SH
 
 class ShortStopper(Stopper):
     """A stopper that stops an episode if the agents deposit margin goes below the maintenance margin limit
@@ -20,7 +20,7 @@ class ShortStopper(Stopper):
         super().__init__()
 
     def borrow_limit_reached(self, env: 'TradingEnv'):
-        action_scheme: SH = env.action_scheme
+        action_scheme = env.action_scheme
         maintenance_margin = action_scheme.maintenance_margin
         deposit_margin = action_scheme.deposit_margin.total_balance.as_float()
         current_short_value = action_scheme.borrow_quantity.convert(action_scheme.exchange_pair)
@@ -37,6 +37,8 @@ class ShortStopper(Stopper):
 
     def stop(self, env: 'TradingEnv') -> bool:
         c1 = self.borrow_limit_reached(env)
-        c2 = self.cash_minimum_hit(env)
-        stop = c1 | c2
+        # c2 = self.cash_minimum_hit(env)
+        stop = False
+        if c1:
+            stop = True
         return stop
