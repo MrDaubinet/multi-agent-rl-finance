@@ -24,9 +24,6 @@ This is an implementation of my masters thesis. It relies on the `tensortrade` f
 6. You're good to go.
 
 # TODO:
-* update from the BSH action scheme to a BHSS (short) scheme which selects specified blocks of shares.
-  * blocks should be equvalent to maximium cash in shares normalised between 1 - 10.
-    * E.g, 10 dollars = 10 shares, therefore trading quantities = [1, 2, 3, 4, 5, 6, 7, 8 , 9, 10] for buy, sell and short.
 * update reward scheme from simple profit to something which includes risk, position-time and other useful evaluators identified in my research.
 * update network architecture to use a cnn
 * update network architecture to use an LSTM

@@ -48,9 +48,11 @@ def generate_env(dataframe, config):
     price_stream.log().diff().fillna(0).rename("lr")
   ])
   # set reward scheme
-  reward_scheme = getReward('short-networth-change')()
+  reward_scheme = getReward('short-networth-change')(
+    starting_value = cash.balance.as_float()
+  )
   # set action scheme
-  action_scheme = getAction('proportion-sell-hold')(
+  action_scheme = getAction('proportion-short-hold')(
     cash=cash,
     asset=asset,
     profit_wallet=profit_wallet,
@@ -62,7 +64,8 @@ def generate_env(dataframe, config):
   # create the render feed
   renderer_feed = DataFeed([
     Stream.source(dataframe["price"], dtype="float").rename("price"),
-    Stream.sensor(action_scheme, lambda s: s.action, dtype="float").rename("action")
+    Stream.sensor(action_scheme, lambda s: s.action, dtype="float").rename("action"),
+    Stream.sensor(action_scheme, lambda s: s.proportion, dtype="float").rename("proportion")
   ])
   renderer = EmptyRenderer()
   if ('render_env' in config and config["render_env"] == True):

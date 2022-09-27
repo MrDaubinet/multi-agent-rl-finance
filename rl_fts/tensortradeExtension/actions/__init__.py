@@ -1,7 +1,7 @@
 from .buy_sell_hold import BSH
 from .proportion_buy_hold_sell import PBSH
 from .buy_sell_short_hold import BSSH
-from .sell_hold import SH
+from .short_hold import SH
 from .proportion_short_hold import PSH
 from .proportion_buy_sell_short_hold import PBSSH
 
@@ -12,7 +12,7 @@ _registry = {
     'proportion-buy-hold-sell': PBSH,
     'buy-sell-short-hold': BSSH,
     'short-hold': SH,
-    'proportion-sell-hold': PSH,
+    'proportion-short-hold': PSH,
     'proportion-buy-sell-short-hold': PBSSH,
 }
 

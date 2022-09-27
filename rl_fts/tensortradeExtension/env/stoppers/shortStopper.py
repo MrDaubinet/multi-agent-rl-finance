@@ -23,7 +23,7 @@ class ShortStopper(Stopper):
         action_scheme = env.action_scheme
         maintenance_margin = action_scheme.maintenance_margin
         deposit_margin = action_scheme.deposit_margin.total_balance.as_float()
-        current_short_value = action_scheme.borrow_quantity.convert(action_scheme.exchange_pair)
+        current_short_value = action_scheme.borrow_asset.convert(action_scheme.exchange_pair)
         margin_requirement = (1 + maintenance_margin)
         if current_short_value > 0:
             margin_threshold = margin_requirement * current_short_value

@@ -17,9 +17,9 @@
     Reward Strategy: short-networth-change
 '''
 # base class
-from rl_fts.strategies.sinewave.strategy import Strategy
+from rl_fts.strategies.strategy import Strategy
 # Call backs
-from rl_fts.rayExtension.callbacks.recordNetWorthCallback import RecordNetWorthCallback
+from rl_fts.rayExtension.callbacks.recordShortNetWorthCallback import RecordNetWorthCallback
 # RL Agent
 from ray.rllib.agents import ppo
 # Environment
@@ -30,7 +30,7 @@ class PPO_Sinewave_PBHS_SNC(Strategy):
     def __init__(self):
       # run configuration
       self.max_epoch = 50
-      self.net_worth_threshold = 500
+      self.net_worth_threshold = 160
       self.patience = 1
       self.evaluation_frequency = 1
       self.log_name = "sinewave/strategy5"
@@ -58,7 +58,7 @@ class PPO_Sinewave_PBHS_SNC(Strategy):
         "evaluation_config": {
             "env_config": self.env_train_config,
             "render_env": True,
-            "explore": True,
+            "explore": False,
         },
         "num_workers": 1,
         "batch_mode": "complete_episodes",

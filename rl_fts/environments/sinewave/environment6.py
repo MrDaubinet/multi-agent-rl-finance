@@ -48,7 +48,9 @@ def generate_env(dataframe, config):
     price_stream.log().diff().fillna(0).rename("lr")
   ])
   # set reward scheme
-  reward_scheme = getReward('short-networth-change')()
+  reward_scheme = getReward('short-networth-change')(
+    starting_value = cash.balance.as_float()
+  )
   # set action scheme
   action_scheme = getAction('proportion-buy-sell-short-hold')(
     cash=cash,

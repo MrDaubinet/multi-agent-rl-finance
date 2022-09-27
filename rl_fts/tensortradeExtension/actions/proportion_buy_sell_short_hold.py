@@ -70,7 +70,7 @@ class PBSSH(TensorTradeActionScheme):
         self.broker_fee = broker_fee
         # private variables
         self.commission = cash.exchange.options.commission
-        self.borrow_quantity: Quantity =  0 * self.asset.instrument
+        self.borrow_asset: Quantity =  0 * self.asset.instrument
         self.borrow_cash: Quantity =  0 * self.cash.instrument
         # flags
         self.complete_exit_order = False
@@ -85,6 +85,8 @@ class PBSSH(TensorTradeActionScheme):
         self.action = -1
         self.proportion = -1
         self.currently_in_short = False
+        self.proportions_history = []
+        self.actions_history = []
 
     @property
     def action_space(self):
@@ -153,7 +155,8 @@ class PBSSH(TensorTradeActionScheme):
         """
         action = actions[0]
         proportion = actions[1][0]
-
+        self.actions_history.append(action)
+        self.proportions_history.append(proportion)
         order = None
 
         # only place an order if the action has changed (if the action hasn't changed, then we are holding the position)
@@ -172,10 +175,12 @@ class PBSSH(TensorTradeActionScheme):
             elif action == 3 and self.currently_in_short:
                 # create a market order to buy back the same quantity of stock with cash (from cash to asset)
                 order = self.exitShort()
-            self.action = action
+            if order:
+                self.action = action
+                self.proportion = proportion
         else:
             # if we are currently in a short position
-            if self.action == 2:
+            if self.currently_in_short:
                 order = self.maintainShort()
 
         return [order]
@@ -183,7 +188,9 @@ class PBSSH(TensorTradeActionScheme):
     def buyOrder(self, proportion):
         """execute a buy order"""
         order = None
-        # if we are currently in a short
+        # We are not allowed to buy new asset with cash that is on loan from
+        # a short position
+        # if we are currently in a short, we must exit the short
         if self.currently_in_short:
             # we need to exit the short, then make the buy order
             exit_short_order = self.exitShort()
@@ -191,7 +198,7 @@ class PBSSH(TensorTradeActionScheme):
             self.broker.update()
             self.completeShort()
         if self.cash.balance.as_float() > 0:
-            # self.borrow_quantity: Quantity =  0 * self.asset.instrument
+            # self.borrow_asset: Quantity =  0 * self.asset.instrument
             order = proportion_order(self.portfolio, self.cash, self.asset, (proportion / 100))
         return order
 
@@ -199,42 +206,44 @@ class PBSSH(TensorTradeActionScheme):
         """execute a sell order"""
         order = None
         # if we are currently in a short
-        if self.currently_in_short:
-            # we need to exit the short, then make the buy order
-            order = self.exitShort()
-        elif self.asset.balance.as_float() > 0:
+        # if self.currently_in_short:
+        #     # we need to exit the short, then make the buy order
+        #     order = self.exitShort()
+        if self.asset.balance.as_float() > 0:
             order = proportion_order(self.portfolio, self.asset, self.cash, (proportion / 100))
         return order
 
     def enterShort(self, proportion):
-        # if the previous position was a buy
-        if self.action == 0:
-            sell_order = self.sellOrder(100)
-            self.broker.submit(sell_order)
-            self.broker.update()
+        # if we currently have no funds to short (sell all asset)
+        # if self.cash.balance.as_float() == 0:
+        #     sell_order = self.sellOrder(100)
+        #     self.broker.submit(sell_order)
+        #     self.broker.update()
             
         # requirements for entering a short
-        if self.cash.balance * proportion < self.minimum_short_deposit:
+        total_required_amount = (proportion / 100) * self.cash.balance
+        if total_required_amount < self.minimum_short_deposit:
             return None
 
         # The borrowed asset must be created and placed in the brokers wallet
-        borrow_size = self.cash.balance.as_float() * (proportion/100) / self.borrow_requirement
+        borrow_size = total_required_amount.as_float() * (proportion/100) / self.borrow_requirement
         self.borrow_cash = Quantity(self.cash.balance.instrument, borrow_size)
         # remove commision from the borrow quantity (commision charged to the agent)
         borrow_commision = self.borrow_cash * self.commission
-        self.borrow_cash = self.borrow_cash - borrow_commision
-        self.borrow_quantity = self.borrow_cash.convert(self.exchange_pair)
+        # set the final cash and asset quantities
+        self.borrow_cash: Quantity = self.borrow_cash - borrow_commision
+        self.borrow_asset = self.borrow_cash.convert(self.exchange_pair)
         # When the agent enters the short position, the borrow limit must be transfered (cash -> deposit_margin)
         self.transfer(
             source=self.cash,
             target=self.deposit_margin,
-            quantity=self.cash.balance * (proportion / 100),
-            commission=self.cash.balance * self.commission,
+            quantity=total_required_amount,
+            commission=total_required_amount * self.commission,
             reason="SHORT - BORROW DEPOSIT"
         )
         # Add the funds to the broker wallet (deposit)
         self.broker_asset.deposit(
-            self.borrow_quantity,
+            self.borrow_asset,
             "Adding security to brokers wallet so that it can be \
             transfered to us to sell in a short position"
         )
@@ -242,7 +251,7 @@ class PBSSH(TensorTradeActionScheme):
         self.transfer(
             source=self.broker_asset,
             target=self.asset,
-            quantity=self.borrow_quantity,
+            quantity=self.borrow_asset,
             commission=0 * self.commission,
             reason="SHORT - BORROWED ASSET"
         )
@@ -259,7 +268,7 @@ class PBSSH(TensorTradeActionScheme):
             self.portfolio,
             source=self.asset,
             target=self.cash,
-            proportion=(proportion / 100)
+            proportion=1
         )
         self.currently_in_short = True
         return short_enter_order
@@ -268,10 +277,10 @@ class PBSSH(TensorTradeActionScheme):
         short_exit_order = None
         current_asset_quantity = self.cash.balance.convert(self.exchange_pair)
         # we need to check if we have enough cash to cover the borrow quantity
-        if  current_asset_quantity > self.borrow_quantity: 
+        if  current_asset_quantity > self.borrow_asset: 
             # our cash is worth more than the origional asset (we've made money)
             # The short must be exited (cash -> asset)
-            cash_quantity: Quantity = self.borrow_quantity.convert(self.exchange_pair)
+            cash_quantity: Quantity = self.borrow_asset.convert(self.exchange_pair)
             short_exit_order = Order(
                 step=self.portfolio.clock.step,
                 side=TradeSide.BUY,
@@ -284,11 +293,11 @@ class PBSSH(TensorTradeActionScheme):
         else:
             # our cash is worth less than the borrowed quantity
             # transfer from deposit margin (deposit_margin -> cash)
-            borrow_remainder_cash = (self.borrow_quantity - current_asset_quantity).convert(self.exchange_pair)
+            borrow_remainder_cash = (self.borrow_asset - current_asset_quantity).convert(self.exchange_pair)
             # we need to make sure that the broker gets the exact quantity back that we borrowed,
             # Therefore we need to deduct any commision fees on transfers from the deposit margin
             # add them to the transfer amount
-            short_exit_commission = self.borrow_quantity.convert(self.exchange_pair) * self.commission
+            short_exit_commission = self.borrow_asset.convert(self.exchange_pair) * self.commission
             # infalte the transfer quantity to accomidate commision on order
             borrow_remainder_cash += short_exit_commission
             # inflate the transfer quantity to accomidate commision on transfer
@@ -342,7 +351,7 @@ class PBSSH(TensorTradeActionScheme):
         )
         # clear the brokers wallet
         self.broker_asset.reset()
-        self.borrow_quantity =  0 * self.asset.instrument
+        self.borrow_asset =  0 * self.asset.instrument
         self.complete_exit_order = False
 
     def maintainShort(self):
@@ -350,15 +359,14 @@ class PBSSH(TensorTradeActionScheme):
             A function used to deduct interest from the short, check that the short is still 
             valid and exit the short if the margin balance drops below the maintenance margin
         """
-        # cash value of the borrow quantity
-        borrow_cash_qauntity = self.borrow_quantity.convert(self.exchange_pair)
         # interest must be deducted from the short value
-        interest: Quantity = borrow_cash_qauntity * self.margin_interest
-        # if the deposit value is less than maintenance_margin % of the borrowed assets value
-        margin_value = self.deposit_margin.total_balance - interest
-        # calculate the threshold value which must be maintained
-        borrow_threshold_cash = self.maintenance_margin * self.borrow_quantity.convert(self.exchange_pair)
-        if margin_value < borrow_threshold_cash:
+        interest: Quantity = self.borrow_cash * self.margin_interest
+
+        deposit_margin = self.deposit_margin.total_balance.as_float()
+        current_short_value = self.borrow_asset.convert(self.exchange_pair)
+        margin_requirement = (1 + self.maintenance_margin)
+        margin_threshold = margin_requirement * current_short_value
+        if deposit_margin < margin_threshold:
             return self.exitShort()
         else:
             # deduct interest from margin account
@@ -399,6 +407,10 @@ class PBSSH(TensorTradeActionScheme):
         self.broker_asset.reset()
         self.broker_cash.reset()
         self.deposit_margin.reset()
-        self.borrow_quantity =  0 * self.asset.instrument
+        self.borrow_asset =  0 * self.asset.instrument
+        self.borrow_cash =  0 * self.cash.instrument
         self.action = -1
+        self.proportion = -1
         self.currently_in_short = False
+        self.proportions_history = []
+        self.actions_history = []

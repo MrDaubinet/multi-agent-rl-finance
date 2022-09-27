@@ -1,7 +1,7 @@
 import yfinance as yf
 import pandas as pd
 
-class StockDataDownload:
+class StockDataGenerator:
     """Provides methods for retrieving data on different stocks from yahoo finance using the yfinance python module
     Attributes
     ----------
