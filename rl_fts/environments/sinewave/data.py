@@ -7,6 +7,12 @@ class SineWaveDataGenerator:
     """Provides methods for generating sinewave data
     Attributes
     ----------
+    x_sample: number of samples to generate,
+    period: the number of periods (peaks) in the sinewave,
+    amplitude: the amplitude of the sine wave,
+    y_adjustment: how much to shift the sinewave by 
+     - this helps with removing negative price values
+    d_ratio: the ratio to use for training, validating and testing
 
     Methods
     -------
@@ -31,8 +37,12 @@ class SineWaveDataGenerator:
         ----------
         x_range : int
             The number of data points to generate.
-        y_height : int
+        period: int
+            The number of waves to generate in the dataset
+        amplitude : int
             The height of the sine wave
+        y_adjustment: int
+            How much to lift/shift the sinewave by
         d_ratio : List[float]
             The ratio for the [train, evaluation, test] split.
         """

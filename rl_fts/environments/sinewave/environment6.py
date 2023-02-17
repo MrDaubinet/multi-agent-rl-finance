@@ -1,3 +1,19 @@
+'''
+  Sinewave - Environment 6:
+    Data: Generated Sinewave
+      Training: 5 peaks
+      Evaluation: 2 peaks
+      Testing: 3 peaks
+    Observation Space: 
+      price values,
+      price -> rolling mean (10 data points),
+      price -> rolling mean (20 data points),
+      price -> rolliong mean (30 data points),
+      price -> log difference
+    Action Space: proportion-buy-sell-short-hold
+    Reward Strategy: short-networth-change
+'''
+
 from tensortrade.oms.instruments import Instrument
 from tensortrade.feed.core import DataFeed, Stream
 from tensortrade.oms.exchanges import Exchange, ExchangeOptions

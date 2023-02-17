@@ -28,6 +28,9 @@ class Strategy():
     self.config = None
     self.env_test_config = None
     self.agent = None
+    self.algorithm_name = None
+    self.log_name = None
+    self.log_dir = None
     raise NotImplementedError
 
   def train(self) -> Analysis:
@@ -45,8 +48,8 @@ class Strategy():
     # Setup stopping conditions
     stopper = CombinedStopper(
         MaximumIterationStopper(max_iter=self.max_epoch),
-        NetWorthstopper(net_worth_mean=self.net_worth_threshold, patience=self.patience),
-        TrialPlateauStopper(metric="net_worth_max")
+        # NetWorthstopper(net_worth_mean_threshold=self.net_worth_threshold, patience=self.patience),
+        # TrialPlateauStopper(metric="net_worth_max")
     )
 
     # train an agent
@@ -61,7 +64,8 @@ class Strategy():
       local_dir=self.log_dir,
       checkpoint_freq=0,
       checkpoint_at_end=True,
-      callbacks=[PrintCallback(), RenderCallback(self.evaluation_frequency, self.log_name, self.log_dir)]
+      callbacks=[PrintCallback(), RenderCallback(self.evaluation_frequency, self.log_name, self.log_dir)],
+      reuse_actors=True,
     )
     print(f"Best Trail log directory: {analysis.best_logdir}")
     ray.shutdown()

@@ -1,3 +1,19 @@
+'''
+  Sinewave - Environment 2:
+    Data: Generated Sinewave
+      Training: 5 peaks
+      Evaluation: 2 peaks
+      Testing: 3 peaks
+    Observation Space: 
+      price values,
+      price -> rolling mean (10 data points),
+      price -> rolling mean (20 data points),
+      price -> rolliong mean (30 data points),
+      price -> log difference
+    Action Space: short-hold
+    Reward Strategy: short-networth-change
+'''
+
 from tensortrade.oms.instruments import Instrument
 from tensortrade.feed.core import DataFeed, Stream
 from tensortrade.oms.exchanges import Exchange, ExchangeOptions
@@ -97,3 +113,13 @@ def create_env(config):
   else:
     dataframe = data_generator.test()
   return generate_env(dataframe, config)
+
+def normalization_info(config):
+  data_generator = SineWaveDataGenerator(period=config["period"], x_sample=config["trading_days"])
+  training_data = data_generator.train()
+  mean=training_data.mean().values
+  var=training_data.var().values
+  return {
+    "mean": mean,
+    "var": var
+  }

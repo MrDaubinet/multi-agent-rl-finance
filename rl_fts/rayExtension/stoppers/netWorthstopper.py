@@ -4,11 +4,11 @@ from ray.tune import Stopper
 
 class NetWorthstopper(Stopper):
     def __init__(self, 
-        net_worth_mean: int,
+        net_worth_mean_threshold: int,
         patience: int = 0
     ):
         self._start = time.time()
-        self._net_worth_mean = net_worth_mean
+        self._net_worth_mean_threshold = net_worth_mean_threshold
         self._patience = patience
         self._iterations = 0
         self.stop = False
@@ -17,7 +17,7 @@ class NetWorthstopper(Stopper):
     def has_reached_objective(self, result):
         if "net_worth_max" not in result["custom_metrics"]:
             self.stop = False
-        elif result["custom_metrics"]["net_worth_mean"] >= self._net_worth_mean:
+        elif result["custom_metrics"]["net_worth_mean"] >= self._net_worth_mean_threshold:
             self.stop = True
         return self.stop
 

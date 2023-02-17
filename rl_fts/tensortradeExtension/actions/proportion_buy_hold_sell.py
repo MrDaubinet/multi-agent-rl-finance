@@ -21,7 +21,7 @@ class PBSH(TensorTradeActionScheme):
         The wallet to hold funds in the quote instrument.
     """
 
-    registered_name = "bsh"
+    registered_name = "pbsh"
 
     def __init__(self, cash: 'Wallet', asset: 'Wallet'):
         super().__init__()

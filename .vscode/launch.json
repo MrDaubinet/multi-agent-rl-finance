@@ -13,10 +13,10 @@
       "justMyCode": false
     },
     {
-      "name": "Python: sinewaveBSHC strategy1",
+      "name": "Python: STOCK strategy1",
       "type": "python",
       "request": "launch",
-      "program": "./rl_fts/strategies/sinewaveBSHC/strategy1.py",
+      "program": "./rl_fts/strategies/stock/strategy1.py",
       "console": "integratedTerminal",
       "justMyCode": false
     }

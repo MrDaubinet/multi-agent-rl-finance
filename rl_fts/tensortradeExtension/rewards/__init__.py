@@ -1,5 +1,5 @@
 from .short_net_worth_change import SNWC
-from .net_worth_change import NWC
+from .proportional_net_worth_change import NWC
 from .proportion_position_based_return import PPBR
 
 from tensortrade.env.default.rewards import TensorTradeRewardScheme, PBR, SimpleProfit

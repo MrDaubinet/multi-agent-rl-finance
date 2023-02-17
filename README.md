@@ -3,11 +3,14 @@ This is an implementation of my masters thesis. It relies on the `tensortrade` f
 
 # Repository Structure
 - **.vscode** contains opinionated vscode settings for debugging and formatting.
-- **experiments** include jupyter notebooks created for investigation purposes of the masters. (This could be removed)
-- **strategies** strategies implemented to train DRL agents on specific data.
+- **environments** financial trading rl environements.
+- **strategies** strategies implemented to train DRL agents on a specified environment.
 - **logs** training logs for strategies.
 - **rayExtensions** classes which extend the behaviour of the ray framework. 
 - **tensortrade** extensions made to plug into the tensortrade framework. 
+
+## Strategies
+If an environment represents a problem, a strategy represents a solution for solving the environment. Strageies apply deep reinforcement learning algorithms to environments. Strategies are separated into the domains of environments that they are solving. Each environment domain has one or more strategies for solving it. Strategies may make use of custom models for their deepn reinforcement learning algorithms.
 
 # Install Instructions
 1. Install Anaconda and create a new environment for this projects dependancies
@@ -23,8 +26,32 @@ This is an implementation of my masters thesis. It relies on the `tensortrade` f
 5. Download the tensortrade repository, comment out tensotrade from the requirements.txt and install all depedencies.
 6. You're good to go.
 
+# Viewing Experiments
+Experiments can be viewed in tensorboard. This can be viewed buy running the following:
+`tensorboard --logdir logs/`
+
+# Algorithm Information
+## RL Algorithm
+Model is PPO
+
+## Policy Model
+
+# Notes:
+* Update the batch size to something reasonable
+* update the number of workers
+* find out what a env spec should look like (specifically the ID)
+
 # TODO:
-* update reward scheme from simple profit to something which includes risk, position-time and other useful evaluators identified in my research.
+* Add a preprocess and postprocess function for the model
+  * clip the observation space between the min and max found in the training data and normalize
+    * ray recommends doing this in the environment and by wrapping the env
+    * another option is to creat a custom model with batch normalizatio (or normalization layers)
+  * clip the reward to something ... and normalize
+
+## Other TODO
+* The above task requires me to calculate the largest and smallest reward that can be achieved by the environment.
+  * Create a helper class to get this value
+* update reward scheme from simple net worth change to something which includes risk, position-time and other useful evaluators identified in my research.
 * update network architecture to use a cnn
 * update network architecture to use an LSTM
 * implement a strategy on stock data

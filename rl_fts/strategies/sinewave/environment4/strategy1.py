@@ -1,21 +1,20 @@
 '''
-  Strategy 1:
+  Strategy 2:
     DRL: 
       PPO with a custom MLP architecture
-    Environment: Stock - NFLX
-      Data: fetched data (01/01/2019 - 20/09/2022)
-        Training: 2 years
-        Evaluation: 1 year
-        Testing: 9 months
+    Environment: sinewave
+      Data: Generated Sinewave
+        Training: 5 peaks
+        Evaluation: 2 peaks
+        Testing: 3 peaks
       Observation Space: 
         price values,
         price -> rolling mean (10 data points),
         price -> rolling mean (20 data points),
         price -> rolliong mean (30 data points),
         price -> log difference
-    Action Space: buy-sell-hold
-    Reward Strategy: position-based-return
-    horizon: 30 days
+    Action Space: proportion-buy-hold-sell
+    Reward Strategy: net-worth-change
 '''
 # base class
 from rl_fts.strategies.strategy import Strategy
@@ -24,9 +23,9 @@ from rl_fts.rayExtension.callbacks.recordNetWorthCallback import RecordNetWorthC
 # RL Agent
 from ray.rllib.agents import ppo
 # Environment
-from rl_fts.environments.stock.environment1 import create_env
+from rl_fts.environments.sinewave.environment4.environment import create_env
 
-class PPO_Sinewave_BSH_PBR(Strategy):
+class PPO_Sinewave_PBHS_NWC(Strategy):
 
     def __init__(self):
       # run configuration
@@ -34,7 +33,7 @@ class PPO_Sinewave_BSH_PBR(Strategy):
       self.net_worth_threshold = 250
       self.patience = 1
       self.evaluation_frequency = 1
-      self.log_name = "stock/NFLX/strategy1"
+      self.log_name = "sinewave/strategy4"
       self.log_dir = "/Users/jordandaubinet/Documents/Repositories/masters/masters-code/logs/"
 
       # configure the train environment
@@ -43,22 +42,11 @@ class PPO_Sinewave_BSH_PBR(Strategy):
         "window_size": 30,
         "min_periods": 30,
         "max_allowed_loss": 1, # allow for 100% loss of funds
-        # "period": 10, # the number of periods to generate with the sine wave
+        "period": 10, # the number of periods to generate with the sine wave
         "render_env": True,
-        # "trading_days": 121,
+        "trading_days": 121,
         "log_name": self.log_name,
         "log_dir": self.log_dir,
-      }
-      # configure the test environment
-      self.env_test_config = {
-        "type": "test",
-        "window_size": 30,
-        "min_periods": 30,
-        "render_env": True,
-        "max_allowed_loss": 0.1, # allow for 10% loss of funds
-        "num_workers": 1,
-        # "period": 10, # the number of periods to generate with the sine wave
-        # "trading_days": 242,
       }
       # Configure the algorithm.
       self.config = {
@@ -68,7 +56,7 @@ class PPO_Sinewave_BSH_PBR(Strategy):
         "evaluation_num_episodes": 1,
         "evaluation_num_workers": 1,
         "evaluation_config": {
-            "env_config": self.env_test_config,
+            "env_config": self.env_train_config,
             "render_env": True,
             "explore": False,
         },
@@ -76,8 +64,7 @@ class PPO_Sinewave_BSH_PBR(Strategy):
         "batch_mode": "complete_episodes",
         "callbacks": RecordNetWorthCallback,
         "framework": "tf2", "eager_tracing": True,
-        "horizon": 30,
-        "soft_horizon": True
+        "horizon": 30
       }
       ppo_config = ppo.DEFAULT_CONFIG.copy()
       ppo_config.update(self.config)
@@ -87,7 +74,7 @@ class PPO_Sinewave_BSH_PBR(Strategy):
       self.agent = ppo.PPOTrainer
 
 def main():
-  strategy = PPO_Sinewave_BSH_PBR()
+  strategy = PPO_Sinewave_PBHS_NWC()
   strategy.clearLogs()
   strategy.train()
 

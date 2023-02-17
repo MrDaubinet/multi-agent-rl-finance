@@ -11,7 +11,7 @@
       price -> rolliong mean (30 data points),
       price -> log difference
     Action Space: buy-sell-hold
-    Reward Strategy: position-based-return
+    Reward Strategy: net-worth-change
 '''
 
 # tensortrade Environment
@@ -22,6 +22,7 @@ from tensortrade.oms.exchanges import Exchange, ExchangeOptions
 from tensortrade.oms.services.execution.simulated import execute_order
 from tensortrade.oms.wallets import Wallet, Portfolio
 import matplotlib.pyplot as plt
+import numpy as np
 
 # --- Custom Code --- #
 # Environment
@@ -31,7 +32,7 @@ from rl_fts.environments.sinewave.data import SineWaveDataGenerator
 # Action Schemes
 from rl_fts.tensortradeExtension.actions import BSH
 # Reward Schemes
-from rl_fts.tensortradeExtension.rewards import PBR
+from rl_fts.tensortradeExtension.rewards.proportional_net_worth_change import NWC, get_reward_clipping, get_max_episode_reward, get_max_net_worth
 # Renderer
 from rl_fts.tensortradeExtension.renderer.bhsPositionChangeChart import PositionChangeChart
 
@@ -45,7 +46,7 @@ def generate_env(dataframe, config):
   # setup financial instruments
   USD = Instrument("USD", 8, "U.S. Dollar")
   TTC = Instrument("TTC", 8, "TensorTrade Coin")
-  cash = Wallet(sinewavee_xchange, config['starting_cash'] * USD)
+  cash = Wallet(sinewavee_xchange, 100 * USD)
   asset = Wallet(sinewavee_xchange, 0 * TTC)
   # creat portfolio
   portfolio = Portfolio(USD, [
@@ -61,14 +62,14 @@ def generate_env(dataframe, config):
     price_stream.log().diff().fillna(0).rename("lr")
   ])
   # set reward scheme
-  reward_scheme = PBR(
-    price=price_stream
+  reward_scheme = NWC(
+    starting_value=cash.balance.as_float()
   )
   # set action scheme
   action_scheme = BSH(
     cash=cash,
     asset=asset
-  ).attach(reward_scheme)
+  )
   # create the render feed
   renderer_feed = DataFeed([
     Stream.source(dataframe["price"], dtype="float").rename("price"),
@@ -110,13 +111,31 @@ def create_env(config):
 def normalization_info(config):
   data_generator = SineWaveDataGenerator(period=config["period"], x_sample=config["trading_days"], d_ratio=config["d_ratio"])
   training_data = data_generator.train()
-  training_data["fast"] = training_data["price"].rolling(window=10).mean(),
-  training_data["medium"] = training_data["price"].rolling(window=20).mean().rename("medium"),
-  training_data["slow"] = training_data["price"].rolling(window=30).mean().rename("slow"),
-  training_data["lr"] = training_data["price"].log().diff().fillna(0).rename("lr")
-  mean=training_data.mean().values
-  var=training_data.var().values
+  obs_1 = training_data['price'].values
+  obs_2 = training_data['price'].rolling(window=10).mean().fillna(0).values
+  obs_3 = training_data['price'].rolling(window=20).mean().fillna(0).values
+  obs_4 = training_data['price'].rolling(window=30).mean().fillna(0).values
+  obs_5 = np.log(training_data['price']).diff().fillna(0).values
+
+  observation_data = np.array([obs_1, obs_2, obs_3, obs_4, obs_5])
+  mean=observation_data.mean(axis=1)
+  var=observation_data.var(axis=1)
   return {
     "mean": mean,
     "var": var
   }
+
+def reward_clipping(config):
+  data_generator = SineWaveDataGenerator(period=config["period"], x_sample=config["trading_days"], d_ratio=config["d_ratio"])
+  training_data = data_generator.train().iloc[config['window_size']:]
+  return get_reward_clipping(training_data["price"].values)
+
+def max_episode_reward(config):
+  data_generator = SineWaveDataGenerator(period=config["period"], x_sample=config["trading_days"], d_ratio=config["d_ratio"])
+  training_data = data_generator.train().iloc[config['window_size']:]
+  return get_max_episode_reward(training_data["price"].values)
+
+def max_net_worth(config):
+  data_generator = SineWaveDataGenerator(period=config["period"], x_sample=config["trading_days"], d_ratio=config["d_ratio"])
+  training_data = data_generator.train().iloc[config['window_size']:]
+  return get_max_net_worth(training_data["price"].values, config['starting_cash'])

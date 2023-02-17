@@ -13,7 +13,7 @@
         price -> rolling mean (20 data points),
         price -> rolliong mean (30 data points),
         price -> log difference
-    Action Space: short-hold
+    Action Space: buy-sell-short-hold
     Reward Strategy: short-networth-change
 '''
 # base class
@@ -23,17 +23,17 @@ from rl_fts.rayExtension.callbacks.recordShortNetWorthCallback import RecordNetW
 # RL Agent
 from ray.rllib.agents import ppo
 # Environment
-from rl_fts.environments.sinewave.environment2 import create_env
+from rl_fts.environments.sinewave.environment3.environment import create_env
 
-class PPO_Sinewave_SH_SNC(Strategy):
+class PPO_Sinewave_BSSH_SNC(Strategy):
 
     def __init__(self):
       # run configuration
       self.max_epoch = 50
-      self.net_worth_threshold = 160
+      self.net_worth_threshold = 500
       self.patience = 1
       self.evaluation_frequency = 1
-      self.log_name = "sinewave/strategy2"
+      self.log_name = "sinewave/strategy3"
       self.log_dir = "/Users/jordandaubinet/Documents/Repositories/masters/masters-code/logs/"
 
       # configure the train environment
@@ -46,15 +46,14 @@ class PPO_Sinewave_SH_SNC(Strategy):
         "render_env": True,
         "trading_days": 121,
         "log_name": self.log_name,
-        "log_dir": self.log_dir,
+        "log_dir": self.log_dir
       }
       # Configure the algorithm.
       self.config = {
         "env": "TradingEnv",
         "env_config": self.env_train_config,  # config to pass to env class
         "evaluation_interval": self.evaluation_frequency,
-        "evaluation_duration": 1,
-        "evaluation_duration_unit": "episodes",
+        "evaluation_num_episodes": 1,
         "evaluation_num_workers": 1,
         "evaluation_config": {
             "env_config": self.env_train_config,
@@ -75,7 +74,7 @@ class PPO_Sinewave_SH_SNC(Strategy):
       self.agent = ppo.PPOTrainer
 
 def main():
-  strategy = PPO_Sinewave_SH_SNC()
+  strategy = PPO_Sinewave_BSSH_SNC()
   strategy.clearLogs()
   strategy.train()
 
