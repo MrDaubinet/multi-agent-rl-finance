@@ -3,7 +3,7 @@ from tensortrade.env.generic import TradingEnv
 
 from rl_fts.tensortradeExtension.actions.short_hold import SH
 
-class SNWC(TensorTradeRewardScheme):
+class PSNWC(TensorTradeRewardScheme):
     """A simple reward scheme that rewards the agent based on the change in its networth
     """
 
@@ -11,6 +11,7 @@ class SNWC(TensorTradeRewardScheme):
         self.net_worth_history = []
         self.starting_value = starting_value
         self.previous_net_worth = starting_value
+        self.total_reward = 0
 
     def reward(self, env: TradingEnv) -> float:
         return self.get_reward(env.action_scheme)
@@ -31,15 +32,19 @@ class SNWC(TensorTradeRewardScheme):
         deposit_margin = action_scheme.deposit_margin.balance
         borrowed_cash = action_scheme.borrow_asset.convert(action_scheme.exchange_pair)
         net_worth = (asset_balance + cash_balance + deposit_margin - borrowed_cash).as_float()
-        net_worth_change = net_worth - self.previous_net_worth
-        self.previous_net_worth = net_worth
+        if self.previous_net_worth != net_worth:
+            preportion_net_worth_change = (net_worth - self.previous_net_worth) / self.previous_net_worth
+            self.previous_net_worth = net_worth
+        else:
+            preportion_net_worth_change = 0
+        self.total_reward += preportion_net_worth_change
         self.net_worth_history.append(net_worth)
-
-        return net_worth_change
+        return preportion_net_worth_change
 
     def reset(self) -> None:
         """Resets the history and previous net worth of the reward scheme."""
         self.net_worth_history = []
         self.previous_net_worth = self.starting_value
+        self.total_reward = 0
         
 

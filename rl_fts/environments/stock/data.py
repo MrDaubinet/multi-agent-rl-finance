@@ -1,7 +1,21 @@
+"""
+A Class for downloading and scaling stock data.
+
+Data is stored in the data/stock directory with the following file naming conventions: 
+<tickername>/<start-date>_<end-date>_interval. 
+
+Normalised variables are stored in csv's ending with: _max, _mean, min, _std and _var. 
+The first column of each csv defines the variables being normalised as 
+['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+
+A z-score scaled dataframe of the data is stored as _scaled. 
+"""
+
 import yfinance as yf
 import pandas as pd
 from typing import List
 from math import ceil
+import os
 
 class StockDataGenerator:
     """Provides methods for retrieving data on different stocks from yahoo finance using the yfinance python module
@@ -78,25 +92,16 @@ class StockDataGenerator:
         self.auto_adjust = auto_adjust
         self.actions = actions
         self.d_ratio = d_ratio
-        self.data = self.generate()
+        self.folder_path = "data/stock/"+ticker
+        self.file_name = start+"_"+end+"_"+interval
+        self.file_path = self.folder_path+"/"+self.file_name
+        self.load()
 
-    def generate(self):
-        """
-        Generates training, evaluation and testing data for a sinwave.
-        Parameters
-        ----------
-        x_range : int
-            The number of data points to generate.
-        y_height : int
-            The height of the sine wave
-        Returns
-        -------
-        `pd.DataFrame`:
-            Price.
-        """
+    def download(self):
+        """Download stock data from yfinance"""
         msft = yf.Ticker(self.ticker)
         if self.start:
-            return msft.history(
+            history: pd.DataFrame = msft.history(
                 interval=self.interval, 
                 start=self.start, 
                 end=self.end, 
@@ -105,14 +110,54 @@ class StockDataGenerator:
                 actions=self.actions
             ) 
         else:
-            return msft.history(
+            history: pd.DataFrame = msft.history(
                 interval=self.interval, 
                 period=self.period, 
                 prepost=self.prepost, 
                 auto_adjust=self.auto_adjust, 
                 actions=self.actions
-            )  
-    
+            )
+
+        if not os.path.exists(self.folder_path):
+            os.makedirs(self.folder_path)
+        
+        history.to_parquet(path=self.file_path+".parquet")
+
+        return history
+
+    def load(self):
+        """Load the stock price information for the specified ticker"""
+        # if file does not exist
+        if not os.path.isfile(self.file_path+".parquet"):
+            self.data = self.download()
+            # self.scaled_data = self.scale_data()
+            # self.save_normalisation_values()
+            # self.load_normalisation_values()
+        else:
+            self.data = pd.read_parquet(path=self.file_path+".parquet")
+            # self.scaled_data = pd.read_parquet(path=self.file_path+"_scaled"+".parquet")
+            # self.load_normalisation_values()
+
+    # def scale_data(self):
+    #     df_copy = self.data.copy()
+    #     df_z_scaled = (df_copy - df_copy.mean()) / df_copy.std() 
+    #     df_z_scaled.to_parquet(path=self.file_path+"_scaled"+".parquet")
+    #     return df_z_scaled
+
+    # def save_normalisation_values(self):
+    #     """Normalise the price information for the specified ticker"""
+    #     self.data.min().to_csv(self.file_path+"_min"+".csv", header=False)
+    #     self.data.max().to_csv(self.file_path+"_max"+".csv",  header=False)
+    #     self.data.mean().to_csv(self.file_path+"_mean"+".csv",  header=False)
+    #     self.data.std().to_csv(self.file_path+"_std"+".csv",  header=False)
+    #     self.data.var().to_csv(self.file_path+"_var"+".csv",  header=False)
+
+    # def load_normalisation_values(self):
+    #     self.min = pd.read_csv(self.file_path+"_min"+".csv")
+    #     self.max = pd.read_csv(self.file_path+"_max"+".csv")
+    #     self.mean = pd.read_csv(self.file_path+"_mean"+".csv")
+    #     self.std = pd.read_csv(self.file_path+"_std"+".csv")
+    #     self.var = pd.read_csv(self.file_path+"_var"+".csv")
 
     def train(self):
         """

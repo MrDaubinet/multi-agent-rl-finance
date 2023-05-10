@@ -11,5 +11,7 @@ For rapidly developing and evaluating strategies, we take advantage of a product
 ## Training a Strategy
 Each strategy loads an environment and a deep reinfocement learning algirithm, both with some evironment specific configurations. Ray then applies the ray.tune() execution to the current run configuration and starts training an agent to solve the environment. The training progress will be shown in the terminal and a plot of an evalution will stored in the logs directory, for every epoch/iteration. The training logs can be accessed with `tensorboard` by running `tensorboard --logdir logs/` from the root directory. There is the potential for strategies to implement hyperparameter tuning and this may be explored at a later stage. 
 
+## Training Evaluation
+Policies are evaluated throughout the training run. The evaluation occurs at intervals of 10% * max epoch. These evalutions can be viewed in tensorboard. More specifically, plots of the evaluation runs can be found on the images tab in tensorboard.
 ## Evaluating a Strategy
 More to write here...

@@ -58,5 +58,5 @@ class Chart(Renderer):
         performance_df.plot(ax=self.ax2)
         self.ax2.set_title("Net Worth")
 
-    def close(self, _):
+    def close(self):
         plt.close()

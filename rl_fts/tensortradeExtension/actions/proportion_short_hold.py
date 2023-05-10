@@ -127,7 +127,7 @@ class PSH(TensorTradeActionScheme):
           Note:
             If the action is the same as the previous action, we implement a hold (maintain the short or don't enter)
         """
-        return Tuple((Discrete(2), Box(1, 100, shape=(1,))))
+        return Tuple((Discrete(2), Discrete(10)))
 
     def attach(self, listener):
         self.listeners += [listener]
@@ -174,8 +174,7 @@ class PSH(TensorTradeActionScheme):
         List[Order]
             A list of orders to be submitted to the broker.
         """
-        action = actions[0]
-        proportion = actions[1][0]
+        action, proportion = actions 
         self.actions_history.append(action)
         self.proportions_history.append(proportion)
         order = None

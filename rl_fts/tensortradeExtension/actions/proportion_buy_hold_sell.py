@@ -39,21 +39,21 @@ class PBSH(TensorTradeActionScheme):
     @property
     def action_space(self):
         """
-          0 -> Buy everything
-          1 -> Sell everything
+          (0, x) -> Convert x% of cash to asset
+          (1, y) -> Convert y% of asset to cash
           Note:
             1. If the action is the same as the previous action, we implement a hold
             2. we do nothing until the agent requests a buy
         """
-        return Tuple((Discrete(2), Box(1, 100, shape=(1,))))
+        # return Tuple((Discrete(2), Box(1, 100, shape=(1,))))
+        return Tuple((Discrete(2), Discrete(10)))
 
     def attach(self, listener):
         self.listeners += [listener]
         return self
 
     def get_orders(self, actions: Tuple, portfolio: 'Portfolio') -> 'Order':
-        action = actions[0]
-        proportion = actions[1][0]
+        action, proportion = actions 
         order = None
 
         if abs(action - self.action) > 0:
@@ -67,9 +67,17 @@ class PBSH(TensorTradeActionScheme):
             if src.balance == 0:  # We need to check, regardless of the proposed order, if we have balance in 'src'
                 return []  # Otherwise just return an empty order list
 
-            order = proportion_order(portfolio, src, tgt, proportion / 100)
-            self.action = action
-            self.proportion = proportion
+            if not proportion == 0:
+                proportion = proportion / 10
+
+                if proportion < 0.0:
+                    print("error")
+                if proportion > 1.0:
+                    print("error")
+            
+                order = proportion_order(portfolio, src, tgt, proportion)
+                self.action = action
+                self.proportion = proportion
 
         for listener in self.listeners:
             listener.on_action(actions)

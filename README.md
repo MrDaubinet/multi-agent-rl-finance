@@ -42,18 +42,11 @@ Model is PPO
 * find out what a env spec should look like (specifically the ID)
 
 # TODO:
-* Add a preprocess and postprocess function for the model
-  * clip the observation space between the min and max found in the training data and normalize
-    * ray recommends doing this in the environment and by wrapping the env
-    * another option is to creat a custom model with batch normalizatio (or normalization layers)
-  * clip the reward to something ... and normalize
 
 ## Other TODO
-* The above task requires me to calculate the largest and smallest reward that can be achieved by the environment.
-  * Create a helper class to get this value
 * update reward scheme from simple net worth change to something which includes risk, position-time and other useful evaluators identified in my research.
-* update network architecture to use a cnn
-* update network architecture to use an LSTM
+* update network architecture to use LSTM
+* update network architecture to use Attention
 * implement a strategy on stock data
   * Setup preprocessing:
     * generate technical indicators

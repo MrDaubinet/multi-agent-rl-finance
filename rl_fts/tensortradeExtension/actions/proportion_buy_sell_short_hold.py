@@ -205,21 +205,11 @@ class PBSSH(TensorTradeActionScheme):
     def sellOrder(self, proportion):
         """execute a sell order"""
         order = None
-        # if we are currently in a short
-        # if self.currently_in_short:
-        #     # we need to exit the short, then make the buy order
-        #     order = self.exitShort()
         if self.asset.balance.as_float() > 0:
             order = proportion_order(self.portfolio, self.asset, self.cash, (proportion / 100))
         return order
 
     def enterShort(self, proportion):
-        # if we currently have no funds to short (sell all asset)
-        # if self.cash.balance.as_float() == 0:
-        #     sell_order = self.sellOrder(100)
-        #     self.broker.submit(sell_order)
-        #     self.broker.update()
-            
         # requirements for entering a short
         total_required_amount = (proportion / 100) * self.cash.balance
         if total_required_amount < self.minimum_short_deposit:

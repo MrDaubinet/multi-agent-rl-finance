@@ -1,5 +1,5 @@
-from .short_net_worth_change import SNWC
-from .proportional_net_worth_change import NWC
+from .proportional_short_net_worth_change import PSNWC
+# from .proportional_reward import NWC
 from .proportion_position_based_return import PPBR
 
 from tensortrade.env.default.rewards import TensorTradeRewardScheme, PBR, SimpleProfit
@@ -7,8 +7,8 @@ from tensortrade.env.default.rewards import TensorTradeRewardScheme, PBR, Simple
 _registry = {
     'simple-profit': SimpleProfit,
     'position-based-return': PBR,
-    'short-networth-change': SNWC,
-    'net-worth-change': NWC,
+    'proportion-short-networth-change': PSNWC,
+    # 'net-worth-change': NWC,
     'proportion-position-based-return': PPBR
 }
 

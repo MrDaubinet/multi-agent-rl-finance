@@ -84,6 +84,7 @@ class TradingEnv(gym.Env, TimeIndexed):
         self.renderer = renderer
 
         self.horizon = None
+        self.config = config
 
         if config["horizon"]:
             self.horizon = config["horizon"]
@@ -176,4 +177,7 @@ class TradingEnv(gym.Env, TimeIndexed):
 
     def close(self) -> None:
         """Closes the environment."""
-        self.renderer.close('all')
+        self.renderer.close()
+
+    def test(self) -> None:
+        print("test")

@@ -46,7 +46,7 @@ class KerasBatchNormModel(TFModelV2):
         data_variance = np.repeat(model_config["custom_model_config"]["var"], 30, axis=0)
         norm = tf.keras.layers.Normalization(axis=-1, mean=data_mean, variance=data_variance)(inputs)
         last_layer = norm
-        hiddens = [128, 128]
+        hiddens = model_config["custom_model_config"]["hidden_layers"] # [128, 128]
         # for each hidden layer
         for i, size in enumerate(hiddens):
             label = "fc{}".format(i)
@@ -54,7 +54,7 @@ class KerasBatchNormModel(TFModelV2):
             last_layer = tf.keras.layers.Dense(
                 units=size,
                 kernel_initializer=normc_initializer(1.0),
-                activation=tf.nn.tanh,
+                activation=tf.nn.relu,
                 name=label,
             )(last_layer)
             # Add a batch norm layer and update it to be added as the last layer

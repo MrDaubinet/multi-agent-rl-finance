@@ -32,7 +32,7 @@ from rl_fts.environments.sinewave.data import SineWaveDataGenerator
 # Action Schemes
 from rl_fts.tensortradeExtension.actions import BSH
 # Reward Schemes
-from rl_fts.tensortradeExtension.rewards.proportional_net_worth_change import NWC, get_reward_clipping, get_max_episode_reward, get_max_net_worth
+from rl_fts.tensortradeExtension.rewards.proportional_reward import NWC, get_reward_clipping, get_max_episode_reward, get_max_net_worth
 # Renderer
 from rl_fts.tensortradeExtension.renderer.bhsPositionChangeChart import PositionChangeChart
 

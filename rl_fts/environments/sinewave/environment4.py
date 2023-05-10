@@ -31,7 +31,7 @@ from rl_fts.tensortradeExtension.actions import get as getAction
 # Reward Schemes
 from rl_fts.tensortradeExtension.rewards import get as getReward
 # Renderer
-from rl_fts.tensortradeExtension.renderer.bhscPositionChangeChart import PositionChangeChart
+from rl_fts.tensortradeExtension.renderer.pbhsPositionChangeChart import PositionChangeChart
 
 def generate_env(dataframe, config):
   # create price stream

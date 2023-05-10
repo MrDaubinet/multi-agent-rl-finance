@@ -14,11 +14,11 @@ from rl_fts.tensortradeExtension.env.standard import create
 # Data
 from rl_fts.environments.stock.data import StockDataGenerator
 # Action Schemes
-from rl_fts.tensortradeExtension.actions import BSH
+from rl_fts.tensortradeExtension.actions.proportion_buy_hold_sell import PBSH
 # Reward Schemes
-from rl_fts.tensortradeExtension.rewards.proportional_net_worth_change import PNWC, get_reward_clipping, get_max_episode_reward, get_max_net_worth
+from rl_fts.tensortradeExtension.rewards.proportional_net_worth_change import PNWC
 # Renderer
-from rl_fts.tensortradeExtension.renderer.stockEnvironment1 import Chart
+from rl_fts.tensortradeExtension.renderer.pbhsPositionChangeChart import PositionChangeChart
 
 def generate_env(dataframe, config):
     # create price stream
@@ -51,7 +51,7 @@ def generate_env(dataframe, config):
         starting_value=cash.balance.as_float()
     )
     # set action scheme
-    action_scheme = BSH(
+    action_scheme = PBSH(
         cash=cash,
         asset=asset
     )
@@ -63,14 +63,15 @@ def generate_env(dataframe, config):
         price_stream.rolling(window=30).mean().rename("slow"),
         price_stream.log().diff().fillna(0).rename("lr"),
         Stream.sensor(action_scheme, lambda s: s.action,
-                      dtype="float").rename("action")
+                      dtype="float").rename("action"),
+        Stream.sensor(action_scheme, lambda s: s.proportion, dtype="float").rename("proportion")
     ])
     renderer = default.renderers.EmptyRenderer()
     if ('render_env' in config and config["render_env"] == True):
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5), clear=True)
         plt.tight_layout()
         fig.suptitle("Performance")
-        renderer = Chart(ax1, ax2)
+        renderer = PositionChangeChart(ax1, ax2)
     # create the environment
     environment = create(
         feed=feed,
@@ -87,28 +88,24 @@ def generate_env(dataframe, config):
         # % of allowed loss on starting funds
         max_allowed_loss=config["max_allowed_loss"],
     )
-
     return environment
 
 # -- HELPER FUNCTIONS --#
-
-
 def create_env(config):
     # create the data generator
-    data_generator = StockDataGenerator(
+    data_loader = StockDataGenerator(
         ticker="NFLX", interval="1d", start="2012-12-31", end="2022-12-31")
     if config["type"] == "train":
-        dataframe = data_generator.train()
+        dataframe = data_loader.train()
     elif config["type"] == "eval":
-        dataframe = data_generator.validate()
+        dataframe = data_loader.validate()
     else:
-        dataframe = data_generator.test()
+        dataframe = data_loader.test()
     return generate_env(dataframe, config)
 
-
-def normalization_info(config):
-    data_generator = data_generator = StockDataGenerator(ticker="NFLX", interval="1d", start="2012-12-31", end="2022-12-31")
-    training_data = data_generator.train()
+def normalization_info():
+    data_loader = StockDataGenerator(ticker="NFLX", interval="1d", start="2012-12-31", end="2022-12-31")
+    training_data = data_loader.train()
     obs_1 = training_data['Close'].values
     obs_2 = training_data['Close'].rolling(window=10).mean().fillna(0).values
     obs_3 = training_data['Close'].rolling(window=20).mean().fillna(0).values
@@ -125,20 +122,62 @@ def normalization_info(config):
         "var": var
     }
 
+# Helper Functions
+def get_reward_clipping(price_stream):
+    biggest_gain = float('-inf')
+    biggest_loss = float('inf')
+
+    # at every time step
+    for t in range(0, len(price_stream)-1):
+        # Check the proportion difference in values
+        proportional_price_difference = (
+            price_stream[t+1] - price_stream[t]) / price_stream[t]
+        # update biggest gain
+        if proportional_price_difference > biggest_gain:
+            biggest_gain = proportional_price_difference
+        # update biggest loss
+        if proportional_price_difference < biggest_loss:
+            biggest_loss = proportional_price_difference
+    return max(abs(biggest_loss), biggest_gain)
+
+def get_max_episode_reward(data_stream):
+    price_stream = data_stream
+    episode_max_reward = 0
+    for t in range(0, len(price_stream)-1):
+        # if the price is going up
+        if price_stream[t+1] > price_stream[t]:
+            # get the reward
+            proportional_price_difference = (price_stream[t+1] - price_stream[t]) / price_stream[t]
+            # add the reward to the max
+            episode_max_reward += proportional_price_difference
+    return episode_max_reward
+
 def reward_clipping(config):
-    data_generator = StockDataGenerator(
+    data_loader = StockDataGenerator(
         ticker="NFLX", interval="1d", start="2012-12-31", end="2022-12-31")
-    training_data = data_generator.train().iloc[config['window_size']:]
+    training_data = data_loader.train().iloc[config['window_size']:]
     return get_reward_clipping(training_data["Close"].values)
 
-def max_episode_reward(config):
-    data_generator = StockDataGenerator(
+def max_episode_reward_training(config):
+    data_loader = StockDataGenerator(
         ticker="NFLX", interval="1d", start="2012-12-31", end="2022-12-31")
-    training_data = data_generator.train().iloc[config['window_size']:]
+    training_data = data_loader.train().iloc[config['window_size']:]
     return get_max_episode_reward(training_data["Close"].values)
 
-def max_net_worth(config):
-    data_generator = StockDataGenerator(
+def max_episode_reward_evaluation(config):
+    data_loader = StockDataGenerator(
         ticker="NFLX", interval="1d", start="2012-12-31", end="2022-12-31")
-    training_data = data_generator.train().iloc[config['window_size']:]
-    return get_max_net_worth(training_data["Close"].values, config['starting_cash'])
+    training_data = data_loader.validate().iloc[config['window_size']:]
+    return get_max_episode_reward(training_data["Close"].values)
+
+def training_length():
+    data_loader = StockDataGenerator(
+        ticker="NFLX", interval="1d", start="2012-12-31", end="2022-12-31")
+    training_data = data_loader.train()
+    return len(training_data)
+
+def evaluation_length():
+    data_loader = StockDataGenerator(
+        ticker="NFLX", interval="1d", start="2012-12-31", end="2022-12-31")
+    training_data = data_loader.validate()
+    return len(training_data)
