@@ -35,6 +35,7 @@ class PBSH(TensorTradeActionScheme):
         self.listeners = []
         self.action = -1
         self.proportion = -1
+        self.proportion_steps = 10
 
     @property
     def action_space(self):
@@ -45,8 +46,7 @@ class PBSH(TensorTradeActionScheme):
             1. If the action is the same as the previous action, we implement a hold
             2. we do nothing until the agent requests a buy
         """
-        # return Tuple((Discrete(2), Box(1, 100, shape=(1,))))
-        return Tuple((Discrete(2), Discrete(10)))
+        return Tuple((Discrete(2), Discrete(self.proportion_steps)))
 
     def attach(self, listener):
         self.listeners += [listener]
@@ -68,7 +68,7 @@ class PBSH(TensorTradeActionScheme):
                 return []  # Otherwise just return an empty order list
 
             if not proportion == 0:
-                proportion = proportion / 10
+                proportion = proportion / self.proportion_steps
 
                 if proportion < 0.0:
                     print("error")

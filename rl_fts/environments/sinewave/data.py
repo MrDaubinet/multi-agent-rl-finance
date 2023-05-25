@@ -40,9 +40,9 @@ class SineWaveDataGenerator:
         period: int
             The number of waves to generate in the dataset
         amplitude : int
-            The height of the sine wave
+            The height of the sine wave (number of units above and below the y_adjustment)
         y_adjustment: int
-            How much to lift/shift the sinewave by
+            Where on the y-axis to center the sine wave
         d_ratio : List[float]
             The ratio for the [train, evaluation, test] split.
         """

@@ -84,6 +84,7 @@ class PBSSH(TensorTradeActionScheme):
         self.listeners = []
         self.action = -1
         self.proportion = -1
+        self.proportion_steps = 10
         self.currently_in_short = False
         self.proportions_history = []
         self.actions_history = []
@@ -106,7 +107,7 @@ class PBSSH(TensorTradeActionScheme):
             - If the action is a buy order and the previous action was to enter a short,
                 we first exit the short, then create the buy order
         """
-        return Tuple((Discrete(4), Box(1, 100, shape=(1,))))
+        return Tuple((Discrete(4), Box(1, self.proportion_steps, shape=(1,))))
 
     def attach(self, listener):
         self.listeners += [listener]
@@ -211,7 +212,7 @@ class PBSSH(TensorTradeActionScheme):
 
     def enterShort(self, proportion):
         # requirements for entering a short
-        total_required_amount = (proportion / 100) * self.cash.balance
+        total_required_amount = (proportion / self.proportion_steps) * self.cash.balance
         if total_required_amount < self.minimum_short_deposit:
             return None
 

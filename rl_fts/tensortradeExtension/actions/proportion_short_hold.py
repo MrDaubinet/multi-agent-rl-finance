@@ -40,6 +40,8 @@ class PSH(TensorTradeActionScheme):
         The wallet to hold funds in the base intrument.
     asset : `Wallet`
         The wallet to hold funds in the quote instrument.
+    portfolio : `Portfolio`
+        The portfolio to reference when executing trades.
     margin : `Wallet`
         The wallet to hold funds in the margin account.
     borrow_requirement : `float`
@@ -72,7 +74,6 @@ class PSH(TensorTradeActionScheme):
     def __init__(self,
             cash: 'Wallet',
             asset: 'Wallet',
-            profit_wallet: 'Wallet',
             portfolio: 'Portfolio',
             broker_asset: 'Wallet',
             broker_cash: 'Wallet',
@@ -88,7 +89,6 @@ class PSH(TensorTradeActionScheme):
         self.cash = cash
         self.asset = asset
 
-        self.profit_wallet = profit_wallet
         self.portfolio = portfolio
         self.broker_asset = broker_asset
         self.broker_cash = broker_cash
@@ -114,6 +114,7 @@ class PSH(TensorTradeActionScheme):
         self.listeners = []
         self.action = -1
         self.proportion = -1
+        self.proportion_steps = 10
         self.currently_in_short = False
 
         self.proportions_history = []
@@ -127,7 +128,7 @@ class PSH(TensorTradeActionScheme):
           Note:
             If the action is the same as the previous action, we implement a hold (maintain the short or don't enter)
         """
-        return Tuple((Discrete(2), Discrete(10)))
+        return Tuple((Discrete(2), Discrete(self.proportion_steps)))
 
     def attach(self, listener):
         self.listeners += [listener]
@@ -199,6 +200,13 @@ class PSH(TensorTradeActionScheme):
         return [order]
 
     def enterShort(self, proportion):
+        """
+            A function used to enter a short position
+
+            Parameters
+            ----------
+            proportion : float
+        """
         # if currently in a short position
         if self.currently_in_short:
         # we need to exit the current short, then enter a new short position
@@ -208,7 +216,7 @@ class PSH(TensorTradeActionScheme):
             self.completeShort()
 
         # Set the total amount of this trade (150%)
-        total_required_amount = (proportion / 100) * self.cash.balance
+        total_required_amount = (proportion / self.proportion_steps) * self.cash.balance
         # total_required_quantity = Quantity(instrument=self.cash.instrument, size=total_required_amount)
         # requirements for entering a short
         if (total_required_amount) < self.minimum_short_deposit:
@@ -356,6 +364,7 @@ class PSH(TensorTradeActionScheme):
         margin_requirement = (1 + self.maintenance_margin)
         margin_threshold = margin_requirement * current_short_value
         if deposit_margin < margin_threshold:
+            self.action = -1
             return self.exitShort()
         else:
             # deduct interest from margin account

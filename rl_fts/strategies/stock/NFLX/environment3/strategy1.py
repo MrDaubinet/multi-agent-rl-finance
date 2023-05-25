@@ -70,7 +70,7 @@ class PPO_NFLX_PBSH_NWC(Strategy):
 				"log_name": self.log_name,
 				"log_dir": self.log_dir,
 				"horizon": self.training_length,
-				"id": "NFLX_BSH_NWC",
+				"id": "NFLX_SH_NWC",
 				"starting_cash": 100,
 			}
 			# evaluation config
@@ -83,7 +83,7 @@ class PPO_NFLX_PBSH_NWC(Strategy):
 				"log_name": self.log_name,
 				"log_dir": self.log_dir,
 				"horizon": self.evaluation_length,
-				"id": "NFLX_BSH_NWC",
+				"id": "NFLX_SH_NWC",
 				"starting_cash": 100,
 			}
 			# Normalization

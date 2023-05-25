@@ -36,7 +36,7 @@ def generate_env(dataframe, config):
     deposit_margin = Wallet(nflx_exchange, 0 * USD)
     broker_asset = Wallet(nflx_exchange, 0 * NFLX)
     broker_cash = Wallet(nflx_exchange, 0 * USD)
-    profit_wallet = Wallet(nflx_exchange, 0 * USD)
+    # profit_wallet = Wallet(nflx_exchange, 0 * USD)
     # creat portfolio
     portfolio = Portfolio(USD, [
         cash,
@@ -58,7 +58,7 @@ def generate_env(dataframe, config):
     action_scheme = PSH(
         cash=cash,
         asset=asset,
-        profit_wallet=profit_wallet,
+        # profit_wallet=profit_wallet,
         portfolio=portfolio,
         broker_asset=broker_asset,
         broker_cash=broker_cash,
